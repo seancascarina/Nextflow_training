@@ -8,24 +8,25 @@ process sayHello {
     publishDir 'results', mode: 'copy'
 
     input:
+        // "val" here indicates that this is a single value input (variable)
         val greeting
 
     output:
         path 'output.txt'
 
     script:
+    // Use our val variable in the echo statement
     """
     echo '$greeting' > output.txt
     """
 }
 
-/*
- * Pipeline parameters
- */
-params.greeting = 'Holà mundo!'
+// Set default value for greeting parameter (in case 
+// user does not specify one on command line)
+params.greeting = 'Hello, world!'
 
 workflow {
 
     // emit a greeting
-    sayHello(params.greeting)
+    sayHello(params.greeting)   // uses the greeting parameter
 }
