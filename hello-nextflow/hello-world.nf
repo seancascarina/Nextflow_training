@@ -21,8 +21,9 @@ process sayHello {
     """
 }
 
-// Set default value for greeting parameter (in case user does not specify one on command line)
-
+// Set default value for greeting parameter (in case 
+// user does not specify one on command line)
+params.greeting = 'Hello, world!'
 
 workflow {
 
