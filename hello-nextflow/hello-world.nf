@@ -5,6 +5,8 @@
  */
 process sayHello {
 
+    publishDir 'results', mode: 'copy'
+
     output:
         path 'output.txt'
 
