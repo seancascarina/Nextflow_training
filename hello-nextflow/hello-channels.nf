@@ -27,6 +27,9 @@ params.greeting = 'Hello, world!'
 
 workflow {
 
+    // explicitly create a channel with a greeting message
+    greeting_ch = channel.of('Hello Channels!')
+
     // emit a greeting
-    sayHello(params.greeting)   // uses the greeting parameter
+    sayHello(greeting_ch)   // uses the greeting channel
 }
