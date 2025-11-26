@@ -51,9 +51,12 @@ process collectGreetings {
         val batch_name
 
     output:
-        path "COLLECTED-${batch_name}-output.txt"     // double quotes are necessary here for variable interpolation. Single quotes are treated as a string literal.
+        // "emit:" statements allow you to define aliases rather than accessing outputs by index positions
+        path "COLLECTED-${batch_name}-output.txt", emit: outfile     // double quotes are necessary here for variable interpolation. Single quotes are treated as a string literal.
+        val count_greetings, emit: count
 
     script:
+    count_greetings = input_files.size()
     // Use our val variable in the echo statement
     """
     cat $input_files > "COLLECTED-${batch_name}-output.txt"
@@ -87,4 +90,6 @@ workflow {
     // view operators to print the channel contents before and after collect()
     convertToUpper.out.view{ output_files -> "Before collect: $output_files" }
     convertToUpper.out.collect().view{ output_files -> "After collect: $output_files" }
+
+    collectGreetings.out.count.view{ num_greetings -> "There were $num_greetings greetings collected."}
 }
