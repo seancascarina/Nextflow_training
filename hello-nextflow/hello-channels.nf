@@ -12,12 +12,12 @@ process sayHello {
         val greeting
 
     output:
-        path 'output.txt'
+        path "$greeting-output.txt"     // double quotes are necessary here for variable interpolation. Single quotes are treated as a string literal.
 
     script:
     // Use our val variable in the echo statement
     """
-    echo '$greeting' > output.txt
+    echo '$greeting' > '$greeting-output.txt'
     """
 }
 
@@ -28,7 +28,7 @@ params.greeting = 'Hello, world!'
 workflow {
 
     // explicitly create a channel with a greeting message
-    greeting_ch = channel.of('Hello Channels!')
+    greeting_ch = channel.of('Hello', 'Bonjour', 'Hola', 'Ciao', 'Hallo')
 
     // emit a greeting
     sayHello(greeting_ch)   // uses the greeting channel
