@@ -41,6 +41,25 @@ process convertToUpper {
 }
 
 
+process collectGreetings {
+
+    publishDir 'results', mode: 'copy'
+
+    input:
+        // "val" here indicates that this is a single value input (variable)
+        path input_files
+
+    output:
+        path "COLLECTED-output.txt"     // double quotes are necessary here for variable interpolation. Single quotes are treated as a string literal.
+
+    script:
+    // Use our val variable in the echo statement
+    """
+    cat $input_files > "COLLECTED-output.txt"
+    """
+}
+
+
 // Set default value for greeting parameter (in case 
 // user does not specify one on command line)
 params.greeting = 'greetings.csv'
@@ -60,4 +79,10 @@ workflow {
     sayHello(greeting_ch)   // uses the greeting channel
 
     convertToUpper(sayHello.out)  // use the output files from sayHello as input to convertToUpper
+
+    // .collect() operator gathers all output items from the channel into a single list
+    collectGreetings(convertToUpper.out.collect())  // use the output files from convertToUpper as input to collectGreetings
+    // view operators to print the channel contents before and after collect()
+    convertToUpper.out.view{ output_files -> "Before collect: $output_files" }
+    convertToUpper.out.collect().view{ output_files -> "After collect: $output_files" }
 }
