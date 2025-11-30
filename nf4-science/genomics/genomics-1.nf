@@ -11,17 +11,19 @@
  */
 process SAMTOOLS_INDEX {
 
-    container
+    container 'community.wave.seqera.io/library/samtools:1.20--b5dfbd93de237464'
 
-    publishDir
+    publishDir params.outdir, mode: 'symlink'
 
     input:
+        path input_bam
 
     output:
+        path "${input_bam}.bai"
 
     script:
     """
-
+    samtools index ${input_bam}
     """
 
 }
