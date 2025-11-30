@@ -6,7 +6,13 @@
 
 // Primary input
 // ${projectDir} is a built-in Nextflow variable that points to the directory where the current Nextflow workflow script (genomics-1.nf) is located.
-params.reads_bam = "${projectDir}/data/bam/reads_mother.bam"
+
+// Run for a single file========
+// params.reads_bam = "${projectDir}/data/bam/reads_mother.bam"
+// Run for an array of files=========
+params.reads_bam = ["${projectDir}/data/bam/reads_mother.bam",
+                    "${projectDir}/data/bam/reads_father.bam",
+                    "${projectDir}/data/bam/reads_son.bam"]
 params.outdir = "results_genomics"
 
 // Accessory files
@@ -30,7 +36,8 @@ process SAMTOOLS_INDEX {
         path input_bam
 
     output:
-        path "${input_bam}.bai"
+        // Output tuples so that the order is preserved for inputting into GATK_HAPLOTYPECALLER
+        tuple path(input_bam), path("${input_bam}.bai")
 
     script:
     """
@@ -47,8 +54,10 @@ process GATK_HAPLOTYPECALLER {
     publishDir params.outdir, mode: 'symlink'
 
     input:
-        path input_bam
-        path input_bam_index // does not appear in script call as GATK knows where to look, but still need to be provided here for GATK to work with Nextflow.
+        // I'm assuming this unpacks the tuple that was passed to this process
+        tuple path(input_bam), path(input_bam_index)
+        // path input_bam
+        // path input_bam_index // does not appear in script call as GATK knows where to look, but still need to be provided here for GATK to work with Nextflow.
         path ref_fasta
         path ref_index // does not appear in script call as GATK knows where to look, but still need to be provided here for GATK to work with Nextflow.
         path ref_dict // does not appear in script call as GATK knows where to look, but still need to be provided here for GATK to work with Nextflow.
@@ -82,9 +91,13 @@ workflow {
     // Create index file for input BAM file
     SAMTOOLS_INDEX(reads_ch)
 
+    // .view() statements to print values to terminal for manual inspection
+    // reads_ch.view()
+    // SAMTOOLS_INDEX.out.view()
+
     // Call variants from the indexed BAM files
     GATK_HAPLOTYPECALLER(
-        reads_ch,
+        // reads_ch,
         SAMTOOLS_INDEX.out,
         ref_file,
         ref_index_file,
