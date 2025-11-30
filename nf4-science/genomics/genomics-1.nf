@@ -5,6 +5,8 @@
  */
 
 // Primary input
+params.reads_bam = "${projectDir}/data/bam/reads_mother.bam"
+params.outdir = "results_genomics"
 
 /*
  * Generate BAM index file
