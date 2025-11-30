@@ -9,6 +9,12 @@
 params.reads_bam = "${projectDir}/data/bam/reads_mother.bam"
 params.outdir = "results_genomics"
 
+// Accessory files
+params.reference        = "${projectDir}/data/ref/ref.fasta"
+params.reference_index  = "${projectDir}/data/ref/ref.fasta.fai"
+params.reference_dict   = "${projectDir}/data/ref/ref.dict"
+params.intervals        = "${projectDir}/data/ref/intervals.bed"
+
 /*
  * Generate BAM index file
  */
@@ -66,6 +72,12 @@ workflow {
 
     // Create input channel
     reads_ch = Channel.fromPath(params.reads_bam)
+
+    // Load the file paths for the accessory files (reference and intervals)
+    ref_file        = file(params.reference)
+    ref_index_file  = file(params.reference_index)
+    ref_dict_file   = file(params.reference_dict)
+    intervals_file  = file(params.intervals)
 
     // Create index file for input BAM file
     SAMTOOLS_INDEX(reads_ch)
