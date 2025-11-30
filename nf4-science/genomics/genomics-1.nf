@@ -61,7 +61,7 @@ process GATK_HAPLOTYPECALLER {
     script:
     """
     gatk HaplotypeCaller \
-        -R ${ref_fasta} \ 
+        -R ${ref_fasta} \
         -I ${input_bam} \
         -O ${input_bam}.vcf \
         -L ${interval_list}
@@ -82,4 +82,13 @@ workflow {
     // Create index file for input BAM file
     SAMTOOLS_INDEX(reads_ch)
 
+    // Call variants from the indexed BAM files
+    GATK_HAPLOTYPECALLER(
+        reads_ch,
+        SAMTOOLS_INDEX.out,
+        ref_file,
+        ref_index_file,
+        ref_dict_file,
+        intervals_file
+    )
 }
