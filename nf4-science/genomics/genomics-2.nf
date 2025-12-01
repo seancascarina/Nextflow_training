@@ -17,6 +17,7 @@
 params.reads_bam = "${projectDir}/data/sample_bams.txt"
 
 params.outdir = "results_genomics"
+params.cohort_name = "family_trio"
 
 // Accessory files
 params.reference        = "${projectDir}/data/ref/ref.fasta"
@@ -81,6 +82,31 @@ process GATK_HAPLOTYPECALLER {
     """
 }
 
+
+process GATK_GENOMICSDB {
+
+    container "community.wave.seqera.io/library/gatk4:4.5.0.0--730ee8817e436867"
+    publishDir params.outdir, mode: 'symLink'
+
+    input:
+        path all_gvcfs
+        path all_idxs
+        path interval_list
+        val cohort_name
+
+    output:
+        path "${cohort_name}_gdb"
+
+    script:
+        def gvcfs_line = all_gvcfs.collect {gvcf -> "-V ${gvcf}" }.join(' ')
+        """
+        gatk GenomicsDBImport \
+            ${gvcfs_line} \
+            -L ${interval_list} \
+            --genomicsdb-workspace-path ${cohort_name}_gdb
+        """
+}
+
 workflow {
 
     // Create input channel
@@ -108,5 +134,20 @@ workflow {
         ref_index_file,
         ref_dict_file,
         intervals_file
+    )
+
+    // Collect variant calling outputs across samples
+    all_gvcfs_ch = GATK_HAPLOTYPECALLER.out.vcf.collect()  // can refer specifically to the .vcf files because we included the "emit: vcf" in the GATK_HAPLOTYPECALLER process definition
+    all_idxs_ch = GATK_HAPLOTYPECALLER.out.idx.collect()  // can refer specifically to the .idx files because we included the "emit: idx" in the GATK_HAPLOTYPECALLER process definition
+    // An alternative way of referencing the output files according to the order specified 
+    // in the GATK_HAPLOTYPECALLER process definition would be:
+    // all_gvcfs_ch = GATK_HAPLOTYPECALLER.out[0].collect() for the vcf files, and 
+    // all_gvcfs_ch = GATK_HAPLOTYPECALLER.out[1].collect() for the idx files
+
+    GATK_GENOMICSDB(
+        all_gvcfs_ch,
+        all_idxs_ch,
+        intervals_file,
+        params.cohort_name
     )
 }
