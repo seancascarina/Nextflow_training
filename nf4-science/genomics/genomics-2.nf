@@ -83,7 +83,7 @@ process GATK_HAPLOTYPECALLER {
 }
 
 
-process GATK_GENOMICSDB {
+process GATK_JOINTGENOTYPING {
 
     container "community.wave.seqera.io/library/gatk4:4.5.0.0--730ee8817e436867"
     publishDir params.outdir, mode: 'symLink'
@@ -93,9 +93,13 @@ process GATK_GENOMICSDB {
         path all_idxs
         path interval_list
         val cohort_name
+        path ref_fasta // added for GenotypeGVCFs
+        path ref_index // added for GenotypeGVCFs
+        path ref_dict // added for GenotypeGVCFs
 
     output:
-        path "${cohort_name}_gdb"
+        path "${cohort_name}.joint.vcf"     , emit: vcf
+        path "${cohort_name}.joint.vcf.idx" , emit: idx
 
     script:
         def gvcfs_line = all_gvcfs.collect {gvcf -> "-V ${gvcf}" }.join(' ')
@@ -104,6 +108,12 @@ process GATK_GENOMICSDB {
             ${gvcfs_line} \
             -L ${interval_list} \
             --genomicsdb-workspace-path ${cohort_name}_gdb
+
+        gatk GenotypeGVCFs \
+            -R ${ref_fasta} \
+            -V gendb://${cohort_name}_gdb \
+            -L ${interval_list} \
+            -O ${cohort_name}.joint.vcf
         """
 }
 
@@ -144,10 +154,13 @@ workflow {
     // all_gvcfs_ch = GATK_HAPLOTYPECALLER.out[0].collect() for the vcf files, and 
     // all_gvcfs_ch = GATK_HAPLOTYPECALLER.out[1].collect() for the idx files
 
-    GATK_GENOMICSDB(
+    GATK_JOINTGENOTYPING(
         all_gvcfs_ch,
         all_idxs_ch,
         intervals_file,
-        params.cohort_name
+        params.cohort_name,
+        ref_file,
+        ref_index_file,
+        ref_dict_file
     )
 }
