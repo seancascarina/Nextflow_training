@@ -19,26 +19,8 @@ params.intervals        = "${projectDir}/data/ref/intervals.bed"
 // Base name for final output file
 params.cohort_name = "family_trio"
 
-/*
- * Generate BAM index file
- */
-process SAMTOOLS_INDEX {
-
-    container 'community.wave.seqera.io/library/samtools:1.20--b5dfbd93de237464'
-
-    publishDir params.outdir, mode: 'symlink'
-
-    input:
-        path input_bam
-
-    output:
-        tuple path(input_bam), path("${input_bam}.bai")
-
-    script:
-    """
-    samtools index '$input_bam'
-    """
-}
+// Import SAMTOOLS_INDEX process from module
+include { SAMTOOLS_INDEX } from './modules/samtools/index/main.nf'
 
 /*
  * Call variants with GATK HaplotypeCaller
